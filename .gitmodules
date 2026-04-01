@@ -1,6 +1,3 @@
 [submodule "DAY_3-GIT_MASTERY-HESTABIT"]
 	path = DAY_3-GIT_MASTERY-HESTABIT
 	url = git@github.com:Prateekbit05/DAY_3-GIT_MASTERY-HESTABIT.git
-[submodule "DAY_5"]
-	path = DAY_5
-	url = https://github.com/Prateekbit05/DAY_5-AUTOMATION-MINI-CI-PIPELINE-HESTABIT.git
