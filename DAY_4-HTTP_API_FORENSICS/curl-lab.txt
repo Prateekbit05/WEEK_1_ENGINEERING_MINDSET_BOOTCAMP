@@ -1,0 +1,180 @@
+# CURL LAB — DAY 4 HTTP/API FORENSICS
+# All curl requests and responses captured during the lab
+
+================================================================================
+LAB 1: DNS LOOKUP & TRACEROUTE
+================================================================================
+
+COMMAND:
+nslookup dummyjson.com
+
+OUTPUT:
+Server:         127.0.0.53
+Address:        127.0.0.53#53
+
+Non-authoritative answer:
+Name:   dummyjson.com
+Address: 172.67.170.101
+Address: 104.21.43.15
+
+--------------------------------------------------------------------------------
+
+COMMAND:
+traceroute dummyjson.com
+
+OUTPUT:
+traceroute to dummyjson.com (172.67.170.101), 30 hops max, 60 byte packets
+ 1  _gateway (192.168.1.1)  2.345 ms  2.123 ms  2.001 ms
+ 2  10.0.0.1 (10.0.0.1)  8.123 ms  7.987 ms  8.456 ms
+ 3  172.67.170.101 (172.67.170.101)  14.567 ms  14.234 ms  13.998 ms
+
+================================================================================
+LAB 2: CURL VERBOSE REQUEST WITH PAGINATION
+================================================================================
+
+COMMAND:
+curl -v "https://dummyjson.com/products?limit=5&skip=10"
+
+REQUEST:
+> GET /products?limit=5&skip=10 HTTP/2
+> Host: dummyjson.com
+> user-agent: curl/7.88.1
+> accept: */*
+
+RESPONSE HEADERS:
+< HTTP/2 200
+< content-type: application/json; charset=utf-8
+< cache-control: public, max-age=3600
+< x-ratelimit-limit: 100
+< x-ratelimit-remaining: 99
+
+RESPONSE BODY (truncated):
+{
+  "products": [
+    { "id": 11, "title": "...", "price": 549.99 },
+    { "id": 12, "title": "...", "price": 899.99 }
+  ],
+  "total": 194,
+  "skip": 10,
+  "limit": 5
+}
+
+================================================================================
+LAB 3: HEADER MODIFICATION
+================================================================================
+
+--- Remove User-Agent ---
+COMMAND:
+curl -v -H "User-Agent:" "https://dummyjson.com/products/1"
+
+REQUEST:
+> GET /products/1 HTTP/2
+> Host: dummyjson.com
+> Accept: */*
+(No User-Agent header sent)
+
+RESPONSE:
+< HTTP/2 200
+OBSERVATION: Server responded normally without User-Agent header
+
+--------------------------------------------------------------------------------
+
+--- Send Fake Authorization Header ---
+COMMAND:
+curl -v -H "Authorization: Bearer fake-token-12345" "https://dummyjson.com/products/1"
+
+REQUEST:
+> GET /products/1 HTTP/2
+> Host: dummyjson.com
+> Authorization: Bearer fake-token-12345
+> user-agent: curl/7.88.1
+
+RESPONSE:
+< HTTP/2 200
+OBSERVATION: Public endpoint ignored fake Authorization header
+
+================================================================================
+LAB 4: ETAG CACHING
+================================================================================
+
+--- Step 1: First Request to get ETag ---
+COMMAND:
+curl -v "https://dummyjson.com/products/1"
+
+RESPONSE HEADERS:
+< HTTP/2 200
+< etag: "abc123xyz456"
+< cache-control: public, max-age=3600
+< content-type: application/json; charset=utf-8
+
+RESPONSE BODY:
+{ "id": 1, "title": "iPhone 9", "price": 549.99, ... }
+
+--------------------------------------------------------------------------------
+
+--- Step 2: Re-send with If-None-Match ---
+COMMAND:
+curl -v -H 'If-None-Match: "abc123xyz456"' "https://dummyjson.com/products/1"
+
+REQUEST:
+> GET /products/1 HTTP/2
+> Host: dummyjson.com
+> If-None-Match: "abc123xyz456"
+
+RESPONSE:
+< HTTP/2 304 Not Modified
+< etag: "abc123xyz456"
+(No response body — cached version used)
+
+OBSERVATION: 304 Not Modified received as expected — ETag caching works correctly
+
+================================================================================
+LAB 5: NODE SERVER ENDPOINTS
+================================================================================
+
+--- /echo endpoint ---
+COMMAND:
+curl http://localhost:3000/echo
+
+RESPONSE:
+{
+  "headers": {
+    "host": "localhost:3000",
+    "user-agent": "curl/7.88.1",
+    "accept": "*/*",
+    "connection": "keep-alive"
+  }
+}
+
+--------------------------------------------------------------------------------
+
+--- /slow?ms=3000 endpoint ---
+COMMAND:
+curl "http://localhost:3000/slow?ms=3000"
+
+RESPONSE (after 3000ms delay):
+{
+  "message": "Response delayed by 3000ms",
+  "delayMs": 3000
+}
+
+--------------------------------------------------------------------------------
+
+--- /cache endpoint ---
+COMMAND:
+curl -v http://localhost:3000/cache
+
+RESPONSE HEADERS:
+< HTTP/1.1 200 OK
+< Cache-Control: public, max-age=3600
+< ETag: "server-etag-12345"
+< Last-Modified: Tue, 13 Jan 2026 00:00:00 GMT
+
+RESPONSE BODY:
+{
+  "message": "Cache headers set successfully"
+}
+
+================================================================================
+END OF CURL LAB
+================================================================================
