@@ -1,0 +1,13 @@
+// eslint.config.cjs
+module.exports = {
+  root: true,
+  env: {
+    node: true,
+    es2021: true,
+  },
+  extends: ["eslint:recommended"],
+  rules: {
+    "semi": ["error", "always"],
+    "no-unused-vars": "warn"
+  },
+};

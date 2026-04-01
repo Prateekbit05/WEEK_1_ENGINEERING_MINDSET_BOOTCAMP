@@ -1,0 +1,17 @@
+{
+  "name": "day-5-automation-mini-ci-pipeline",
+  "version": "1.0.0",
+  "description": "Day 5 Automation and Mini CI Pipeline",
+  "scripts": {
+    "lint": "eslint src_broken/**/*.js",
+    "format:check": "prettier --check \"src_broken/**/*.js\"",
+    "validate": "./validate.sh",
+    "build": "./build.sh",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.2",
+    "husky": "^9.1.7",
+    "prettier": "^3.7.4"
+  }
+}

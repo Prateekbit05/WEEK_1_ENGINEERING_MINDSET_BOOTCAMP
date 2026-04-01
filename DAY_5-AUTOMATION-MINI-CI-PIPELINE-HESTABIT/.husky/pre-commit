@@ -1,0 +1,13 @@
+. "$(dirname "$0")/_/husky.sh"
+
+echo "Running lint..."
+npm run lint || { echo "Lint failed. Commit aborted."; exit 1; }
+
+echo "Running format check..."
+npm run format:check || { echo "Format check failed. Commit aborted."; exit 1; }
+
+echo "Running validation..."
+./scripts/validate.sh || { echo "Validation failed. Commit aborted."; exit 1; }
+
+echo "All pre-commit checks passed "
+./scripts/validate.sh
